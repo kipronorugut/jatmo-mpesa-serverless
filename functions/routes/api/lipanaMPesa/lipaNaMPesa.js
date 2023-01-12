@@ -119,3 +119,81 @@ stkPushRouter.post(
     res.json(req.merchantMsg);
   }
 );
+
+const fetchTransaction = (req, res, next) => {
+  console.log("Fetch initial transaction request...");
+  // Check validity of message
+  if (!req.body) {
+    mpesaFunctions.handleError(res, "Invalid message received");
+  }
+
+  const query = LipaNaMpesa.findOne({
+    "mpesaInitResponse.MerchantRequestID":
+      req.body.Body.stkCallback.MerchantRequestID,
+    "mpesaInitResponse.CheckoutRequestID":
+      req.body.Body.stkCallback.CheckoutRequestID,
+  });
+
+  //execute the query at a later time
+  query.exec((err, lipaNaMPesaTransaction) => {
+    // Handle error
+    if (err || !lipaNaMPesaTransaction) {
+      mpesaFunctions.handleError(res, "Initial Mpesa transaction not found");
+    }
+    console.log("Initial transacation request found...");
+    // Add transaction to req body
+    req.lipaNaMPesaTransaction = lipaNaMPesaTransaction;
+    next();
+  });
+};
+
+const updateTransaction = (req, res, next) => {
+  console.log("Update Transaction Callback...");
+
+  const conditions = {
+    "mpesaInitResponse.MerchantRequestID":
+      req.body.Body.stkCallback.MerchantRequestID,
+    "mpesaInitResponse.CheckoutRequestID":
+      req.body.Body.stkCallback.CheckoutRequestID,
+  };
+
+  const options = { multi: true };
+
+  // Set callback request to existing transacation
+  req.lipaNaMPesaTransaction.mpesaCallback = req.body.Body;
+  // Update existing Transaction
+  LipaNaMpesa.update(conditions, req.lipaNaMPesaTransaction, options, (err) => {
+    (err) => {
+      mpesaFunctions.handleError(res, "Unable to update transaction", Ge);
+    };
+    next();
+  });
+};
+
+const forwardRequestToRemoteClient = (req, res, next) => {
+  console.log('Send request to originator..');
+  // Forward request to remote server
+  mpesaFunctions.sendCallbackMpesaTxnToAPIInitiator({
+    url: req.lipaNaMPesaTransaction.mpesaInitRequest.CallBackURL,
+    transaction: {
+      status: req.lipaNaMPesaTransaction.mpesaCallback.stkCallback.ResultCode === 0 ? : req.lipaNaMPesaTransaction.mpesaCallback.stkCallback.ResultCode,
+      message: req.lipaNaMPesaTransaction.mpesaCallback.stkCallback.ResultDesc,
+      merchantRequestId: req.lipaNaMPesaTransaction.merchantRequestId,
+      mpesaReference: fetchMpesaReferenceNumber(req.lipaNaMPesaTransaction.mpesaCallback.stkCallback.CallbackMetadata.Item)
+    }
+  }, req, res, next)
+};
+
+stkPushRouter.post('/callback',
+    fetchTransaction,
+    updateTransaction,
+    forwardRequestToRemoteClient,
+    (req, res) => {
+      res.json({
+        ResultCode: 0,
+        ResultDesc: 'The service request is processed successfully.'
+      })
+    }
+)
+
+module.exports = stkPushRouter
