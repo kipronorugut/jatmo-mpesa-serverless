@@ -1,31 +1,38 @@
+require("dotenv").config();
+
 module.exports = {
-  mongodbUri: "",
-  firebaseProjectId: "",
-  port: "3000",
+  firebaseConfig: {
+    apiKey: process.env.FIREBASE_API_KEY,
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.FIREBASE_APP_ID,
+    measurementId: process.env.FIREBASE_MEASUREMENT_ID
+  },
+  port: process.env.PORT,
   mongodb: {
-    url: "mongodb://localhost:27017/darajaAPI",
+    url: process.env.MONGO_URL,
   },
   auth: {
-    url:
-      "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
+    url: process.env.AUTH_URL,
   },
   lipaNaMpesa: {
-    processRequest:
-      "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
-    queryRequest: "https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query",
-    key: "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919",
-    shortCode: "174379",
-    consumerKey: "H65FlGErvyuFvsajRekG9zcRdnQ30kHO",
-    consumerSecret: "2ARcZPg7Gc8gWFBd",
-    callBackURL: "https://api.sample.co.ke/api/v1/lipaNaMpesaService/callback",
+    processRequest: process.env.LIPANAMPESA_PROCESS_REQUEST,
+    queryRequest: process.env.LIPANAMPESA_QUERY_REQUEST,
+    key: process.env.LIPANAMPESA_KEY,
+    shortCode: process.env.LIPANAMPESA_SHORT_CODE,
+    consumerKey: process.env.LIPANAMPESA_CONSUMER_KEY,
+    consumerSecret: process.env.LIPANAMPESA_CONSUMER_SECRET,
+    callBackURL: process.env.LIPANAMPESA_CALLBACK_URL,
   },
   validationConfirm: {
-    registerURLs: "https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl",
-    consumerKey: "3uHElGTxJIBqf3LfcUJ8UJPYmV8sX25s",
-    consumerSecret: "PbhGFEm9Adu0VA7g",
-    shortCode: "600169",
-    confirmationURL: "https://api.binary.co.ke/v1/payBill/confirmation",
-    validationURL: "https://api.sample.co.ke/v1/account/validation",
-    responseType: "Completed",
+    registerURLs: process.env.VALIDATION_CONFIRM_REGISTER_URLS,
+    consumerKey: process.env.VALIDATION_CONFIRM_CONSUMER_KEY,
+    consumerSecret: process.env.VALIDATION_CONFIRM_CONSUMER_SECRET,
+    shortCode: process.env.VALIDATION_CONFIRM_SHORT_CODE,
+    confirmationURL: process.env.VALIDATION_CONFIRM_CONFIRMATION_URL,
+    validationURL: process.env.VALIDATION_CONFIRM_VALIDATION_URL,
+    responseType: process.env.VALIDATION_CONFIRM_RESPONSE_TYPE,
   },
 };

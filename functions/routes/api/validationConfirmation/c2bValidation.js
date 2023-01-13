@@ -32,54 +32,96 @@ const validateRequest = (req, res, next) => {
     ),
   };
 
+  // Find remoe URL configuration from database
+  CallbackURLModel.findOne(
+    {
+      shortCode: req.body.BusinessShortCode,
+    },
+    (err, remoteEndPoints) => {
+      // Invalid database response
+      if (!req.body)
+        return mpesaFunctions.handleError(
+          res,
+          "Pay Bill" +
+            req.body.BusinessShortCode +
+            " remote URLs not registered",
+          GENERIC_SERVER_ERROR_CODE
+        );
 
-// Find remoe URL configuration from database
-CallbackURLModel.findOne({
-    "shortCode": req.body.BusinessShortCode
-}, (err, remoteEndPoints) {
-    // Invalid database response
-    if (!req.body) return mpesaFunctions.handleError(res, "Pay Bill" + req.body.BusinessShortCode + " remote URLs not registered", GENERIC_SERVER_ERROR_CODE)
+      // Short code remote endpoints not found
+      if (!remoteEndPoints)
+        return mpesaFunctions.handleError(
+          res,
+          "Remote endpoints for " + req.body.BusinessShortCode + " not found.",
+          GENERIC_SERVER_ERROR_CODE
+        );
 
-    // Short code remote endpoints not found
-    if(!remoteEndPoints) return mpesaFunctions.handleError(res, "Remote endpoints for "+ req.body.BusinessShortCode + " not found.", GENERIC_SERVER_ERROR_CODE)
+      console.log("Validation request %s", JSON.stringify(validationReq));
 
-    console.log("Validation request %s", JSON.stringify(validationReq))
-
-    // Forward to remote server
-    mpesaFunctions.sendCallbackMpesaTxnToAPIInitiator({
-        url: remoteEndPoints.merchant.confirmation,
-        transaction: validateReq
-    }, req, res, next)
-    
-})
-}
+      // Forward to remote server
+      mpesaFunctions.sendCallbackMpesaTxnToAPIInitiator(
+        {
+          url: remoteEndPoints.merchant.confirmation,
+          transaction: validateReq,
+        },
+        req,
+        res,
+        next
+      );
+    }
+  );
+};
 
 const saveTransaction = (req, res, next) => {
-    const transacation = new C2BTransaction({
-        validation: req.body,
-        validateRequest: req.transacationResp
-    })
+  const transacation = new C2BTransaction({
+    validation: req.body,
+    validationResult: req.transactionResp,
+  });
 
-    // Persist transaction details
-    transacation.save((err) => {
-        if (err) mpesaFunctions.handleError(req, "Validating account reference request failed.", GENERIC_SERVER_ERROR_CODE)
+  // Persist transaction details
+  transacation.save((err) => {
+    if (err)
+      mpesaFunctions.handleError(
+        req,
+        "Validating account reference request failed.",
+        GENERIC_SERVER_ERROR_CODE
+      );
 
-        // Design response to Safaricom
-        req.body.safaricomResp = {
-            ResultCode: req.transacationResp.status === "00" ? 0 : 1,
-            ResultDesc: req.transacationResp.message,
-            ThirdPartyTransID: req.transacationResp.transacationId
-        }
-    })
+    // Design response to Safaricom
+    req.body.safaricomResp = {
+      ResultCode: req.transacationResp.status === "00" ? 0 : 1,
+      ResultDesc: req.transacationResp.message,
+      ThirdPartyTransID: req.transacationResp.transacationId,
+    };
+  });
+};
+
+/**
+ * Process response from remote merchant API
+ * @param req req.transactionResp contains the response from the merchant
+ * @param res
+ * @param next
+ */
+let  processRemoteValidationResp = function(req, res, next) {
+  //Check response validity
+  if (!req.transactionResp) mpesaFunctions.handleError(req, 'Validating account reference request failed.', GENERIC_SERVER_ERROR_CODE)
+
+  // Design response to safaricom
+  req.body.safaricomResp = {
+      ResultCode: req.transactionResp.status === '00' ? 0 : 1,
+      ResultDesc: req.transactionResp.message,
+      ThirdPartyTransID: req.transactionResp.transactionId
+  }
 }
 
-c2bValidaitionRouter.post('/',
-    validateRequest,
-    processRemoteValidationResp,
-    saveTransaction,
-    (req, res, next) => {
-        res.json(req.body.safaricomResp)
-    }
+c2bValidaitionRouter.post(
+  "/",
+  validateRequest,
+  processRemoteValidationResp,
+  saveTransaction,
+  (req, res, next) => {
+    res.json(req.body.safaricomResp);
+  }
 );
 
-module.exports = c2bValidaitionRouter
+module.exports = c2bValidaitionRouter;

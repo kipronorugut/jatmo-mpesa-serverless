@@ -47,7 +47,7 @@ const txnRepository = new mongoose.Schema({
 });
 
 // Create a model based on the schema
-const lipaNaMPesaTransaction = mongoose.model("lipaNaMpesaTxn", txnRepository);
+let lipaNaMpesaTransaction = mongoose.model("LipaNaMpesaTxn", txnRepository);
 
 // Export model
-module.exports = lipaNaMPesaTransaction;
+module.exports = lipaNaMpesaTransaction;

@@ -1,5 +1,5 @@
 const express = require("express");
-const moment - require("moment");
+const moment = require("moment");
 const c2bConfirmationRouter = express.Router();
 
 const mpesaFunctions = require("../../helpers/mpesaFunctions");
@@ -69,27 +69,28 @@ CallbackURLModel.findOne({
 })
 }
 
-const saveTransaction = (req, res, next) => {
-    const filter = {
-        "validation.MSISDN": req.body.MSISDN,
-        "validation.BillRefNumber": req.body.BillRefNumber,
-        "validation.TransID": req.body.TransID
+let saveTransaction = function (req, res, next) {
+
+    let filter = {
+        'validation.MSISDN': req.body.MSISDN,
+        'validation.BillRefNumber': req.body.BillRefNumber,
+        'validation.TransID': req.body.TransID
     }
+    //Update initial validation transaction
+    C2BTransaction.update(filter, {$set: {confirmation: req.body}}, {upsert: true}, function (err) {
+        if (err) return mpesaFunctions.handleError(req, 'Unable to save validation request.', GENERIC_SERVER_ERROR_CODE)
 
-    // Update initial validation transaction
-    C2BTransaction.update(filter, {$set: {confirmation: req.body}}, {upsert:true}, (err){
-        if (err) return mpesaFunctions.handleError(req, "Unable to save validaition request.", GENERIC_SERVER_ERROR_CODE)
-
-        console.log('Tnx Id: %s from %s update successfully', req.body.TransID, req.body.MSISDN, req.body.BillRefNumber)
+        console.log('Tnx Id: %s from %s for %s update successfully', req.body.TransID, req.body.MSISDN, req.body.BillRefNumber)
         next();
     })
+
 }
 
 c2bConfirmationRouter.post('/',
     findInitialTransaction,
     sendRequestToRemoteApplication,
     saveTransaction,
-    (req, res, next){
+    (req, res, next) => {
         // Static response as customer account is already debited
         res.json({
             ResultCode: 0,

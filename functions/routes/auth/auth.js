@@ -78,62 +78,68 @@ const setNewToken = (req, res, serviceName, newInstance, next) => {
   const auth =
     "Basic " +
     Buffer.from(consumerKey + ":" + consumerSecret).toString("base64");
-   
-   request({ url:url, headers: {"Authorization": auth}},
-        (error, response, body) => {
-            // Process successful token response
-            const tokenResp = JSON.parse(body);
 
-            // Check if response contains error
-            if(!error || !tokenResp.errorCode){
-                const newToken = {
-                    lastUpdate: moment().format("YYYY-MM-DD HH:mm:ss"),
-                    accessToken: tokenResp.access_token,
-                    timeout: tokenResp.expires_in,
-                    service: serviceName
-                }
-            
+  request(
+    { url: url, headers: { Authorization: auth } },
+    (error, response, body) => {
+      // Process successful token response
+      const tokenResp = JSON.parse(body);
 
-            if (newInstance) {
-                // Create new access token for M-Pesa service
-                token = new TokenModel(
-                    newToken
-                )
-                // Save service token
-                token.save((err) => {
-                    if (err){
-                        mpesaFunctions.handleError(res, "Unable to save token. Service:" + serviceName)
-                    } else {
-                        req.transactionToken = token.accessToken
-                    }
-                    next();
-                }
+      // Check if response contains error
+      if (!error || !tokenResp.errorCode) {
+        const newToken = {
+          lastUpdate: moment().format("YYYY-MM-DD HH:mm:ss"),
+          accessToken: tokenResp.access_token,
+          timeout: tokenResp.expires_in,
+          service: serviceName,
+        };
+
+        if (newInstance) {
+          // Create new access token for M-Pesa service
+          token = new TokenModel(newToken);
+          // Save service token
+          token.save((err) => {
+            if (err) {
+              mpesaFunctions.handleError(
+                res,
+                "Unable to save token. Service:" + serviceName
+              );
             } else {
-                // Update existing access token
-                const conditions = {service: serviceName}
-                const options = {multi: true}
-                // Update existing token
-                TokenModel.update(conditions, newToken, options,
-                    (err, record) => {
-                        if(err){
-                            mpesaFunctions.handleError(res, "Unable to update token. Service:"+ serviceName)
-                        } else{
-                            (record) => {
-                                req.transactionToken = newToken.accessToken;
-                            }
-                        }
-                        next();
-                    })
-                
-
+              req.transactionToken = token.accessToken;
             }
+            next();
+          });
         } else {
-            // Body is empty
-            mpesaFunctions.handleError(res, (tokenResp.errorMessage ? tokenResp.errorMessage : "Failed Auth Token Processing") ||
-            error.getMessage(), GENERIC_SERVER_ERROR_CODE)
+          // Update existing access token
+          const conditions = { service: serviceName };
+          const options = { multi: true };
+          // Update existing token
+          TokenModel.update(conditions, newToken, options, (err, record) => {
+            if (err) {
+              mpesaFunctions.handleError(
+                res,
+                "Unable to update token. Service:" + serviceName
+              );
+            } else {
+              (record) => {
+                req.transactionToken = newToken.accessToken;
+              };
+            }
+            next();
+          });
         }
-    })
-}
+      } else {
+        // Body is empty
+        mpesaFunctions.handleError(
+          res,
+          (tokenResp.errorMessage
+            ? tokenResp.errorMessage
+            : "Failed Auth Token Processing") || error.getMessage(),
+          GENERIC_SERVER_ERROR_CODE
+        );
+      }
+    }
+  );
+};
 
-
-module.exports = fetchToken
+module.exports = fetchToken;
