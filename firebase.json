@@ -1,8 +1,8 @@
 {
-  "functions": [
+  "functions": [   
     {
-      "source": "functions",
-      "codebase": "default",
+      "source": "mpesa-api",
+      "codebase": "mpesa-api",
       "ignore": [
         "node_modules",
         ".git",
