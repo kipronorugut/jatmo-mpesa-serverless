@@ -6,7 +6,7 @@ const mpesaFunctions = require("../../helpers/mpesaFunctions");
 const GENERIC_SERVER_ERROR_CODE = "01";
 
 // Load config values
-const config = require("../../../config/config");
+const config = require("../../../config");
 
 const CallbackURLModel = require("./c2bCallbackUrlModel");
 const C2B_URL_REGISTRATION_SERVICE_NAME = "C2B-URL-REGISTRATION";

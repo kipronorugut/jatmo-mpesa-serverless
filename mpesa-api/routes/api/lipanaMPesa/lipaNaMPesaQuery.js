@@ -5,7 +5,7 @@ const moment = require("moment");
 
 const mpesaFunctions = require("../../helpers/mpesaFunctions");
 // Then load config from a designated file.
-const config = require("../../../config/config");
+const config = require("../../../config");
 
 const LIPA_NA_MPESA_SERVICE_NAME = "STK-PUSH";
 

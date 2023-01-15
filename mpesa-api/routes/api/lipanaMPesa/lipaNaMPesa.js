@@ -6,7 +6,7 @@ const stkPushRouter = express.Router();
 const auth = require("../../auth/auth");
 const mpesaFunctions = require("../../helpers/mpesaFunctions");
 
-const config = require("../../../config/config");
+const config = require("../../../config");
 const moment = require("moment/moment");
 
 const LIPA_NA_MPESA_SERVICE_NAME = "STK-PUSH";

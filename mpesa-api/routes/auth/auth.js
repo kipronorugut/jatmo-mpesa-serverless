@@ -7,11 +7,11 @@ const GENERIC_SERVER_ERROR_CODE = "01";
 
 // Authentication Model
 const TokenModel = require("./tokenModel");
-const config = require("../../config/config");
+const config = require("../../config");
 
 const mpesaFunctions = require("../helpers/mpesaFunctions");
 const { service } = require("firebase-functions/v1/analytics");
-const { lipaNaMpesa } = require("../../config/config");
+const { lipaNaMpesa } = require("../../config");
 const { response } = require("express");
 
 const fetchToken = (req, res, next) => {
